@@ -1,0 +1,23 @@
+.news-list {
+  padding: 20px;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    mat-form-field {
+      width: 400px;
+    }
+  }
+
+  table {
+    width: 100%;
+  }
+
+  .mat-column-actions {
+    width: 100px;
+    text-align: center;
+  }
+}

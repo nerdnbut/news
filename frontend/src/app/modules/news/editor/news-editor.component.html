@@ -1,0 +1,52 @@
+<mat-card class="editor-card">
+  <mat-card-header>
+    <mat-card-title>{{ isEdit ? '编辑新闻' : '创建新闻' }}</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <form [formGroup]="newsForm" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>标题</mat-label>
+        <input matInput formControlName="title" placeholder="请输入新闻标题">
+        <mat-error *ngIf="newsForm.get('title')?.hasError('required')">
+          标题必填
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>分类</mat-label>
+        <mat-select formControlName="category">
+          <mat-option value="politics">政治</mat-option>
+          <mat-option value="economy">经济</mat-option>
+          <mat-option value="technology">科技</mat-option>
+          <mat-option value="sports">体育</mat-option>
+        </mat-select>
+        <mat-error *ngIf="newsForm.get('category')?.hasError('required')">
+          请选择分类
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>内容</mat-label>
+        <textarea matInput formControlName="content" rows="10" placeholder="请输入新闻内容"></textarea>
+        <mat-error *ngIf="newsForm.get('content')?.hasError('required')">
+          内容必填
+        </mat-error>
+      </mat-form-field>
+
+      <div class="image-upload">
+        <button type="button" mat-raised-button (click)="fileInput.click()">
+          上传封面图
+        </button>
+        <input hidden (change)="onImageUpload($event)" #fileInput type="file" accept="image/*">
+      </div>
+
+      <div class="button-row">
+        <button mat-button type="button" [routerLink]="['/news']">取消</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="newsForm.invalid || loading">
+          {{ loading ? '保存中...' : '保存' }}
+        </button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card> 
