@@ -1,184 +1,139 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTreeModule } from '@angular/material/tree';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CategoryService, Category } from '../../core/services/category.service';
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
+import { CategoryFormDialogComponent } from './category-form-dialog.component';
 
 @Component({
   selector: 'app-category-manager',
   standalone: true,
   imports: [
     CommonModule,
-    MatTreeModule,
+    MatTableModule,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSnackBarModule
   ],
   template: `
-    <div class="category-manager">
+    <div class="category-container">
       <div class="header">
         <h2>分类管理</h2>
-        <button mat-raised-button color="primary" (click)="addCategory()">
+        <button mat-raised-button color="primary" (click)="openAddDialog()">
           <mat-icon>add</mat-icon>
-          添加分类
+          新增分类
         </button>
       </div>
 
-      <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-        <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
-          <button mat-icon-button disabled></button>
-          <span>{{node.name}}</span>
-          <div class="actions">
-            <button mat-icon-button (click)="editCategory(node)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="deleteCategory(node)">
+      <table mat-table [dataSource]="categories">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>分类名称</th>
+          <td mat-cell *matCellDef="let category">{{category.name}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>操作</th>
+          <td mat-cell *matCellDef="let category">
+            <button mat-icon-button color="warn" (click)="deleteCategory(category)">
               <mat-icon>delete</mat-icon>
             </button>
-          </div>
-        </mat-tree-node>
+          </td>
+        </ng-container>
 
-        <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
-          <div class="mat-tree-node">
-            <button mat-icon-button matTreeNodeToggle>
-              <mat-icon>
-                {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-              </mat-icon>
-            </button>
-            <span>{{node.name}}</span>
-            <div class="actions">
-              <button mat-icon-button (click)="addSubCategory(node)">
-                <mat-icon>add</mat-icon>
-              </button>
-              <button mat-icon-button (click)="editCategory(node)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="deleteCategory(node)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
-          </div>
-          <div class="nested-node" [class.hidden]="!treeControl.isExpanded(node)">
-            <ng-container matTreeNodeOutlet></ng-container>
-          </div>
-        </mat-nested-tree-node>
-      </mat-tree>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
     </div>
   `,
   styles: [`
-    .category-manager {
+    .category-container {
       padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+
+      h2 {
+        margin: 0;
       }
+    }
 
-      .mat-tree {
-        background: transparent;
-      }
-
-      .mat-tree-node {
-        min-height: 48px;
-        display: flex;
-        align-items: center;
-        padding-right: 16px;
-
-        .actions {
-          margin-left: auto;
-          display: flex;
-          gap: 8px;
-          opacity: 0;
-          transition: opacity 0.2s;
-        }
-
-        &:hover .actions {
-          opacity: 1;
-        }
-      }
-
-      .nested-node {
-        padding-left: 40px;
-
-        &.hidden {
-          display: none;
-        }
-      }
+    table {
+      width: 100%;
     }
   `]
 })
 export class CategoryManagerComponent implements OnInit {
-  treeControl = new NestedTreeControl<Category>(node => node.children);
-  dataSource = new MatTreeNestedDataSource<Category>();
+  categories: Category[] = [];
+  displayedColumns = ['name', 'actions'];
 
   constructor(
     private categoryService: CategoryService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit() {
     this.loadCategories();
   }
 
-  hasChild = (_: number, node: Category) => !!node.children && node.children.length > 0;
-
   loadCategories() {
-    this.categoryService.getCategories().subscribe(categories => {
-      this.dataSource.data = this.buildTree(categories);
-    });
-  }
-
-  private buildTree(categories: Category[]): Category[] {
-    const map = new Map<number, Category>();
-    const roots: Category[] = [];
-
-    // 首先创建所有节点的映射
-    categories.forEach(category => {
-      map.set(category.id, { ...category, children: [] });
-    });
-
-    // 构建树结构
-    categories.forEach(category => {
-      const node = map.get(category.id)!;
-      if (category.parentId) {
-        const parent = map.get(category.parentId);
-        if (parent) {
-          parent.children?.push(node);
-        }
-      } else {
-        roots.push(node);
+    this.categoryService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = this.flattenCategories(categories);
+      },
+      error: (error) => {
+        this.snackBar.open('加载分类失败', '关闭', { duration: 3000 });
       }
     });
-
-    return roots;
   }
 
-  addCategory() {
-    // TODO: 实现添加分类对话框
+  flattenCategories(categories: Category[]): Category[] {
+    let result: Category[] = [];
+    categories.forEach(category => {
+      result.push(category);
+      if (category.children?.length) {
+        result = result.concat(this.flattenCategories(category.children));
+      }
+    });
+    return result;
   }
 
-  addSubCategory(parent: Category) {
-    // TODO: 实现添加子分类对话框
-  }
+  openAddDialog() {
+    const dialogRef = this.dialog.open(CategoryFormDialogComponent, {
+      width: '400px'
+    });
 
-  editCategory(category: Category) {
-    // TODO: 实现编辑分类对话框
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadCategories();
+      }
+    });
   }
 
   deleteCategory(category: Category) {
     if (confirm(`确定要删除分类"${category.name}"吗？`)) {
       this.categoryService.deleteCategory(category.id).subscribe({
         next: () => {
+          this.snackBar.open('分类删除成功', '关闭', { duration: 3000 });
           this.loadCategories();
         },
         error: (error) => {
-          console.error('删除分类失败', error);
+          this.snackBar.open(
+            error.error?.message || '删除失败', 
+            '关闭', 
+            { duration: 3000 }
+          );
         }
       });
     }

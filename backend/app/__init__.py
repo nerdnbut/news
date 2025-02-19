@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
@@ -7,27 +7,27 @@ from app.utils import APIError
 
 db = SQLAlchemy()
 jwt = JWTManager()
+cors = CORS()
 
 def create_app(config_class=Config):
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='uploads', static_url_path='/uploads')
     app.config.from_object(config_class)
     
-    # 修改 CORS 配置
-    app.config['CORS_HEADERS'] = 'Content-Type'
-    CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
-
-    # 添加 CORS 预检请求处理
-    @app.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:4200')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response
+    # 简化 CORS 配置
+    CORS(app, 
+         resources={r"/api/*": {
+             "origins": ["http://localhost:4200"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True
+         }})
 
     db.init_app(app)
     jwt.init_app(app)
+    cors.init_app(app)
 
+    # 注册蓝图
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 

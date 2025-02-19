@@ -22,6 +22,11 @@ export interface AuthResponse {
   };
 }
 
+export interface UpdateProfileRequest {
+  username?: string;
+  password?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -63,5 +68,34 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem('authToken');
+  }
+
+  getCurrentUser() {
+    return this.currentUserSubject.value;
+  }
+
+  updateProfile(request: UpdateProfileRequest): Observable<void> {
+    const currentUser = this.currentUserSubject.value;
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
+    
+    const payload = {
+      ...request,
+      id: currentUser.id
+    };
+    
+    return this.http.put<void>(`${this.apiUrl}/profile`, payload).pipe(
+      tap(response => {
+        if (request.username) {
+          const currentUser = this.currentUserSubject.value;
+          if (currentUser) {
+            currentUser.username = request.username;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            this.currentUserSubject.next(currentUser);
+          }
+        }
+      })
+    );
   }
 } 

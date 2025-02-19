@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface Comment {
   id: number;
@@ -12,63 +12,39 @@ export interface Comment {
     avatar: string;
   };
   newsId: number;
-  parentId?: number;
-  children?: Comment[];
+  parentId: number | null;
+  createdAt: string;
   likes: number;
-  createdAt: Date;
   liked: boolean;
+  children?: Comment[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class CommentService {
-  private apiUrl = 'http://127.0.0.1:5000/api/comments';
+  private apiUrl = `${environment.apiUrl}/comments`;
 
   constructor(private http: HttpClient) {}
 
   getComments(newsId: number): Observable<Comment[]> {
-    return this.http.get<Comment[]>(`${this.apiUrl}?newsId=${newsId}`).pipe(
-      map(comments => this.buildCommentTree(comments))
-    );
+    return this.http.get<Comment[]>(`${this.apiUrl}/${newsId}`);
   }
 
-  addComment(comment: Partial<Comment>): Observable<Comment> {
+  addComment(comment: {
+    content: string;
+    newsId: number;
+    authorId?: number;
+    parentId?: number;
+  }): Observable<Comment> {
     return this.http.post<Comment>(this.apiUrl, comment);
   }
 
-  updateComment(id: number, content: string): Observable<Comment> {
-    return this.http.put<Comment>(`${this.apiUrl}/${id}`, { content });
+  likeComment(commentId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${commentId}/like`, {});
   }
 
-  deleteComment(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  likeComment(id: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/like`, {});
-  }
-
-  private buildCommentTree(comments: Comment[]): Comment[] {
-    const map = new Map<number, Comment>();
-    const roots: Comment[] = [];
-
-    comments.forEach(comment => {
-      map.set(comment.id, { ...comment, children: [] });
-    });
-
-    comments.forEach(comment => {
-      const node = map.get(comment.id)!;
-      if (comment.parentId) {
-        const parent = map.get(comment.parentId);
-        if (parent) {
-          parent.children?.push(node);
-        }
-      } else {
-        roots.push(node);
-      }
-    });
-
-    return roots;
+  unlikeComment(commentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${commentId}/like`);
   }
 } 

@@ -1,8 +1,11 @@
 @use '@angular/material' as mat;
 
+// 引入主题
+@include mat.core();
+
 // 定义主题颜色
-$primary: mat.define-palette(mat.$green-palette, 800);
-$accent: mat.define-palette(mat.$amber-palette, A200, A100, A400);
+$primary: mat.define-palette(mat.$indigo-palette);
+$accent: mat.define-palette(mat.$pink-palette);
 $warn: mat.define-palette(mat.$red-palette);
 
 // 创建主题对象
@@ -22,6 +25,27 @@ $theme: mat.define-light-theme((
 // 全局样式
 html, body {
   height: 100%;
+}
+body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+// Material Icons 样式
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
 }

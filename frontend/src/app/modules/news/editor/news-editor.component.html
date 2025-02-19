@@ -35,10 +35,24 @@
       </mat-form-field>
 
       <div class="image-upload">
-        <button type="button" mat-raised-button (click)="fileInput.click()">
-          上传封面图
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onImageUpload($event)"
+          #fileInput
+          style="display: none">
+        <button 
+          mat-raised-button 
+          type="button"
+          (click)="fileInput.click()">
+          <mat-icon>add_photo_alternate</mat-icon>
+          上传封面图片
         </button>
-        <input hidden (change)="onImageUpload($event)" #fileInput type="file" accept="image/*">
+        <img 
+          *ngIf="newsForm.get('coverImage')?.value"
+          [src]="newsForm.get('coverImage')?.value"
+          alt="封面图片预览"
+          class="preview-image">
       </div>
 
       <div class="button-row">

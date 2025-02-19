@@ -1,110 +1,54 @@
-import { Component, OnInit, forwardRef } from '@angular/core';
+import { Component, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatIconModule } from '@angular/material/icon';
-import { FormControl, ReactiveFormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { CategoryService, Category } from '../../../core/services/category.service';
+import { MatSelectModule } from '@angular/material/select';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-category-selector',
   standalone: true,
   imports: [
     CommonModule,
-    MatChipsModule,
     MatFormFieldModule,
-    MatAutocompleteModule,
-    MatIconModule,
-    ReactiveFormsModule
+    MatSelectModule
   ],
-  template: `
-    <mat-form-field class="category-field" appearance="outline">
-      <mat-label>分类</mat-label>
-      <mat-chip-grid #chipGrid>
-        <mat-chip-row *ngFor="let category of selectedCategories"
-                     (removed)="removeCategory(category)">
-          {{category.name}}
-          <button matChipRemove>
-            <mat-icon>cancel</mat-icon>
-          </button>
-        </mat-chip-row>
-      </mat-chip-grid>
-      <input placeholder="选择分类..."
-             [matChipInputFor]="chipGrid"
-             [matAutocomplete]="auto"
-             [formControl]="categoryCtrl">
-    </mat-form-field>
-    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
-      <mat-option *ngFor="let category of filteredCategories" [value]="category">
-        {{category.name}}
-      </mat-option>
-    </mat-autocomplete>
-  `,
-  styles: [`
-    .category-field {
-      width: 100%;
-    }
-  `],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => CategorySelectorComponent),
       multi: true
     }
-  ]
-})
-export class CategorySelectorComponent implements OnInit {
-  categoryCtrl = new FormControl('');
-  selectedCategories: Category[] = [];
-  allCategories: Category[] = [];
-  filteredCategories: Category[] = [];
-
-  constructor(private categoryService: CategoryService) {}
-
-  ngOnInit() {
-    this.loadCategories();
-    this.categoryCtrl.valueChanges.subscribe(value => {
-      this.filterCategories(value);
-    });
-  }
-
-  private loadCategories() {
-    this.categoryService.getCategories().subscribe(categories => {
-      this.allCategories = categories;
-      this.filterCategories('');
-    });
-  }
-
-  private filterCategories(value: string | null) {
-    const filterValue = value?.toLowerCase() || '';
-    this.filteredCategories = this.allCategories.filter(category => 
-      category.name.toLowerCase().includes(filterValue) &&
-      !this.selectedCategories.find(c => c.id === category.id)
-    );
-  }
-
-  selected(event: any) {
-    this.selectedCategories.push(event.option.value);
-    this.categoryCtrl.setValue('');
-    this.onChange(this.selectedCategories);
-  }
-
-  removeCategory(category: Category) {
-    const index = this.selectedCategories.indexOf(category);
-    if (index >= 0) {
-      this.selectedCategories.splice(index, 1);
-      this.filterCategories('');
-      this.onChange(this.selectedCategories);
+  ],
+  template: `
+    <mat-form-field appearance="outline">
+      <mat-label>分类</mat-label>
+      <mat-select [(value)]="selectedValue" (selectionChange)="onChange($event.value)">
+        <mat-option *ngFor="let category of categories" [value]="category.name">
+          {{category.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  `,
+  styles: [`
+    mat-form-field {
+      width: 100%;
     }
-  }
+  `]
+})
+export class CategorySelectorComponent implements ControlValueAccessor {
+  categories = [
+    { name: '政治' },
+    { name: '经济' },
+    { name: '科技' },
+    { name: '体育' }
+  ];
 
-  // ControlValueAccessor 接口实现
-  onChange = (_: any) => {};
-  onTouch = () => {};
+  selectedValue: string = '';
+  onChange = (value: any) => {};
+  onTouched = () => {};
 
-  writeValue(categories: Category[]): void {
-    this.selectedCategories = categories || [];
+  writeValue(value: any): void {
+    this.selectedValue = value;
   }
 
   registerOnChange(fn: any): void {
@@ -112,6 +56,10 @@ export class CategorySelectorComponent implements OnInit {
   }
 
   registerOnTouched(fn: any): void {
-    this.onTouch = fn;
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    // 实现禁用状态
   }
 } 

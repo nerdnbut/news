@@ -123,7 +123,7 @@ export class LoginComponent {
         },
         error: (error) => {
           this.loading = false;
-          this.snackBar.open(error.error?.message || '登录失败', '关闭', { duration: 3000 });
+          this.snackBar.open(error.error?.error || '登录失败', '关闭', { duration: 3000 });
         }
       });
     }

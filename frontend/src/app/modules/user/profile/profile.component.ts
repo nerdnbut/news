@@ -1,7 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,12 +10,11 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-register',
+  selector: 'app-profile',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -25,55 +23,46 @@ import { AuthService } from '../../../core/services/auth.service';
     MatSnackBarModule
   ],
   template: `
-    <div class="register-container">
+    <div class="profile-container">
       <mat-card>
         <mat-card-header>
-          <mat-card-title>注册</mat-card-title>
+          <mat-card-title>个人资料</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
             <mat-form-field appearance="outline">
               <mat-label>用户名</mat-label>
-              <input matInput formControlName="username" placeholder="请输入用户名">
-              <mat-error *ngIf="registerForm.get('username')?.hasError('required')">
+              <input matInput formControlName="username" placeholder="请输入新用户名">
+              <mat-error *ngIf="profileForm.get('username')?.hasError('required')">
                 用户名必填
               </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>密码</mat-label>
+              <mat-label>新密码</mat-label>
               <input matInput [type]="hidePassword ? 'password' : 'text'" 
-                     formControlName="password" placeholder="请输入密码">
-              <button mat-icon-button (click)="hidePassword = !hidePassword" type="button">
+                     formControlName="newPassword" placeholder="请输入新密码">
+              <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
                 <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
               </button>
-              <mat-error *ngIf="registerForm.get('password')?.hasError('required')">
-                密码必填
-              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>确认密码</mat-label>
+              <mat-label>确认新密码</mat-label>
               <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" 
-                     formControlName="confirmPassword" placeholder="请再次输入密码">
-              <button mat-icon-button (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
+                     formControlName="confirmPassword" placeholder="请确认新密码">
+              <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
                 <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
               </button>
-              <mat-error *ngIf="registerForm.get('confirmPassword')?.hasError('required')">
-                请确认密码
-              </mat-error>
-              <mat-error *ngIf="registerForm.hasError('passwordMismatch')">
+              <mat-error *ngIf="profileForm.hasError('passwordMismatch')">
                 两次输入的密码不一致
               </mat-error>
             </mat-form-field>
 
             <div class="actions">
-              <button mat-button type="button" routerLink="/login">
-                返回登录
-              </button>
               <button mat-raised-button color="primary" type="submit" 
-                      [disabled]="registerForm.invalid || loading">
-                {{loading ? '注册中...' : '注册'}}
+                      [disabled]="profileForm.invalid || loading">
+                {{loading ? '保存中...' : '保存修改'}}
               </button>
             </div>
           </form>
@@ -82,17 +71,13 @@ import { AuthService } from '../../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    .register-container {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #f5f5f5;
+    .profile-container {
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
 
       mat-card {
-        width: 100%;
-        max-width: 400px;
-        margin: 20px;
+        margin-top: 20px;
       }
 
       form {
@@ -104,14 +89,13 @@ import { AuthService } from '../../../core/services/auth.service';
 
       .actions {
         display: flex;
-        gap: 8px;
         justify-content: flex-end;
       }
     }
   `]
 })
-export class RegisterComponent {
-  registerForm: FormGroup;
+export class ProfileComponent implements OnInit {
+  profileForm: FormGroup;
   hidePassword = true;
   hideConfirmPassword = true;
   loading = false;
@@ -119,35 +103,45 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
     private snackBar: MatSnackBar
   ) {
-    this.registerForm = this.fb.group({
+    this.profileForm = this.fb.group({
       username: ['', Validators.required],
-      password: ['', Validators.required],
-      confirmPassword: ['', Validators.required]
+      newPassword: [''],
+      confirmPassword: ['']
     }, { validator: this.passwordMatchValidator });
   }
 
-  passwordMatchValidator(g: FormGroup) {
-    return g.get('password')?.value === g.get('confirmPassword')?.value
-      ? null : { passwordMismatch: true };
+  ngOnInit() {
+    // 获取当前用户信息
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.profileForm.patchValue({
+        username: currentUser.username
+      });
+    }
   }
 
-  onSubmit(): void {
-    if (this.registerForm.valid) {
+  passwordMatchValidator(g: FormGroup) {
+    const newPassword = g.get('newPassword')?.value;
+    const confirmPassword = g.get('confirmPassword')?.value;
+    return newPassword === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  onSubmit() {
+    if (this.profileForm.valid) {
       this.loading = true;
-      const { username, password } = this.registerForm.value;
-      this.authService.register({ username, password }).subscribe({
+      const { username, newPassword } = this.profileForm.value;
+      this.authService.updateProfile({ username, password: newPassword }).subscribe({
         next: () => {
-          this.snackBar.open('注册成功', '关闭', { duration: 3000 });
-          this.router.navigate(['/login']);
+          this.snackBar.open('个人资料更新成功', '关闭', { duration: 3000 });
+          this.loading = false;
         },
         error: (error) => {
           this.loading = false;
-          this.snackBar.open(error.error?.error || '注册失败', '关闭', { duration: 3000 });
+          this.snackBar.open(error.error?.message || '更新失败', '关闭', { duration: 3000 });
         }
       });
     }
   }
-}
+} 
