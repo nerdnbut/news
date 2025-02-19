@@ -24,13 +24,10 @@ cd news
 cd backend
 
 # 创建虚拟环境
-python -m venv venv
+conda create -n news
 
 # 激活虚拟环境
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+activate news
 
 # 安装依赖
 pip install -r requirements.txt
