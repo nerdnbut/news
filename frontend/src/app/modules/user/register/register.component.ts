@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
+import { MatSelectModule } from '@angular/material/select';
 
 @Component({
   selector: 'app-register',
@@ -22,7 +23,8 @@ import { AuthService } from '../../../core/services/auth.service';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatSelectModule
   ],
   template: `
     <div class="register-container">
@@ -42,11 +44,13 @@ import { AuthService } from '../../../core/services/auth.service';
 
             <mat-form-field appearance="outline">
               <mat-label>密码</mat-label>
-              <input matInput [type]="hidePassword ? 'password' : 'text'" 
-                     formControlName="password" placeholder="请输入密码">
-              <button mat-icon-button (click)="hidePassword = !hidePassword" type="button">
-                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-              </button>
+              <div style="display: flex; align-items: center;">
+                <input matInput [type]="hidePassword ? 'password' : 'text'" 
+                       formControlName="password" placeholder="请输入密码" style="flex: 1;">
+                <button mat-icon-button (click)="hidePassword = !hidePassword" type="button">
+                  <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+              </div>
               <mat-error *ngIf="registerForm.get('password')?.hasError('required')">
                 密码必填
               </mat-error>
@@ -54,16 +58,29 @@ import { AuthService } from '../../../core/services/auth.service';
 
             <mat-form-field appearance="outline">
               <mat-label>确认密码</mat-label>
-              <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" 
-                     formControlName="confirmPassword" placeholder="请再次输入密码">
-              <button mat-icon-button (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
-                <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-              </button>
+              <div style="display: flex;align-items: center;">
+                <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" 
+                      formControlName="confirmPassword" placeholder="请再次输入密码" style="flex: 1;">
+                <button mat-icon-button (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
+                  <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+              </div>
               <mat-error *ngIf="registerForm.get('confirmPassword')?.hasError('required')">
                 请确认密码
               </mat-error>
               <mat-error *ngIf="registerForm.hasError('passwordMismatch')">
                 两次输入的密码不一致
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>角色</mat-label>
+              <mat-select formControlName="role">
+                <mat-option [value]="0">普通用户</mat-option>
+                <mat-option [value]="1">管理员</mat-option>
+              </mat-select>
+              <mat-error *ngIf="registerForm.get('role')?.hasError('required')">
+                请选择角色
               </mat-error>
             </mat-form-field>
 
@@ -125,7 +142,8 @@ export class RegisterComponent {
     this.registerForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
-      confirmPassword: ['', Validators.required]
+      confirmPassword: ['', Validators.required],
+      role: [0, Validators.required]
     }, { validator: this.passwordMatchValidator });
   }
 
@@ -137,8 +155,8 @@ export class RegisterComponent {
   onSubmit(): void {
     if (this.registerForm.valid) {
       this.loading = true;
-      const { username, password } = this.registerForm.value;
-      this.authService.register({ username, password }).subscribe({
+      const { username, password, role } = this.registerForm.value;
+      this.authService.register({ username, password, role }).subscribe({
         next: () => {
           this.snackBar.open('注册成功', '关闭', { duration: 3000 });
           this.router.navigate(['/login']);

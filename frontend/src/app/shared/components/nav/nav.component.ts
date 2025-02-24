@@ -24,7 +24,7 @@ import { NotificationBellComponent } from '../notification-bell.component';
     <mat-toolbar color="primary">
       <span routerLink="/" style="cursor: pointer">新闻平台</span>
       
-      <ng-container *ngIf="authService.isLoggedIn()">
+      <ng-container *ngIf="authService.isLoggedIn() && isAdmin()">
         <button mat-button routerLink="/news/create">发布新闻</button>
         <button mat-button routerLink="/categories">分类管理</button>
       </ng-container>
@@ -74,5 +74,10 @@ export class NavComponent {
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  isAdmin():boolean {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    return currentUser.role === 1;
   }
 } 

@@ -18,6 +18,8 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120))
     avatar = db.Column(db.String(200))
+    # 添加role字段, 0为普通用户, 1为管理员
+    role = db.Column(db.Integer, default=0)  
     news = relationship('News', back_populates='author')
     comments = db.relationship('Comment', backref='author_ref', lazy=True)
     interests = db.Column(db.String(200))  # 存储用户兴趣,以逗号分隔
@@ -37,6 +39,7 @@ class User(db.Model):
             'username': self.username,
             'email': self.email,
             'avatar': self.avatar,
+            'role': self.role,  # 添加role到返回数据中
             'interests': self.interests.split(',') if self.interests else []
         }
 

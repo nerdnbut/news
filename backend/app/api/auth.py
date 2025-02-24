@@ -13,8 +13,8 @@ def register():
         print("Received registration data:", data)
         
         # 检查必要字段
-        if not all(key in data for key in ['username', 'password']):
-            return jsonify({'error': '用户名和密码不能为空'}), 400
+        if not all(key in data for key in ['username', 'password', 'role']):
+            return jsonify({'error': '用户名、密码和角色不能为空'}), 400
             
         # 检查用户名是否已存在
         if User.query.filter_by(username=data['username']).first():
@@ -23,6 +23,7 @@ def register():
         # 创建新用户
         user = User(username=data['username'])
         user.set_password(data['password'])
+        user.role = data['role']  # 设置用户角色
         
         # 可选字段
         if 'email' in data:
