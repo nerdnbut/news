@@ -9,6 +9,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { NewsService, News } from '../../core/services/news.service';
 import { CategoryService, Category } from '../../core/services/category.service';
+import { UploadService } from '../../core/services/upload.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -65,7 +66,7 @@ import { CategoryService, Category } from '../../core/services/category.service'
       <div class="news-grid">
         <mat-card *ngFor="let news of newsList" class="news-card" 
                   [routerLink]="['/news/detail', news.id]">
-          <img mat-card-image [src]="news.coverImage || 'assets/images/default-news.jpg'" 
+          <img mat-card-image [src]="getImageUrl(news.coverImage)" 
                [alt]="news.title">
           <mat-card-content>
             <h2 class="news-title">{{news.title}}</h2>
@@ -201,7 +202,8 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private newsService: NewsService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private uploadService: UploadService
   ) {}
 
   ngOnInit() {
@@ -265,5 +267,9 @@ export class DashboardComponent implements OnInit {
 
   getExcerpt(content: string): string {
     return content.replace(/<[^>]*>/g, '').slice(0, 100) + '...';
+  }
+
+  getImageUrl(path: string): string {
+    return path ? this.uploadService.getFullImageUrl(path) : 'assets/images/default-news.jpg';
   }
 } 

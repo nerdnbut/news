@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { NewsService } from '../../../core/services/news.service';
 import { CommentService, Comment } from '../../../core/services/comment.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UploadService } from '../../../core/services/upload.service';
 
 @Component({
   selector: 'app-news-detail',
@@ -40,7 +41,7 @@ import { AuthService } from '../../../core/services/auth.service';
           </mat-card-subtitle>
         </mat-card-header>
         
-        <img *ngIf="news.coverImage" mat-card-image [src]="news.coverImage" [alt]="news.title">
+        <img *ngIf="news.coverImage" mat-card-image [src]="getImageUrl(news.coverImage)" [alt]="news.title">
         
         <mat-card-content>
           <div class="news-content" [innerHTML]="news.content"></div>
@@ -314,7 +315,8 @@ export class NewsDetailComponent implements OnInit {
     private newsService: NewsService,
     private commentService: CommentService,
     public authService: AuthService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private uploadService: UploadService
   ) {
     this.commentForm = this.fb.group({
       content: ['', [Validators.required, Validators.maxLength(1000)]]
@@ -433,5 +435,10 @@ export class NewsDetailComponent implements OnInit {
         window.history.back();
       });
     }
+  }
+
+  getImageUrl(path: string): string {
+    console.log('图片地址: ',this.uploadService.getFullImageUrl(path) )
+    return this.uploadService.getFullImageUrl(path);
   }
 } 

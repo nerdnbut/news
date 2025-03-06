@@ -7,7 +7,9 @@ class Config:
         'sqlite:///' + os.path.join(basedir, 'news.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'dev'
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+    
+    # 修改上传目录配置，使用app目录下的uploads文件夹
+    UPLOAD_FOLDER = os.path.join(basedir, 'app', 'static', 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max-limit
 
     # 添加调试配置
@@ -17,7 +19,7 @@ class Config:
     # CORS 配置
     CORS_ENABLED = True
     CORS_RESOURCES = {
-        r"/api/*": {
+        r"/*": {  # 修改为允许所有路径
             "origins": ["http://localhost:4200"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],

@@ -50,7 +50,7 @@
         </button>
         <img 
           *ngIf="newsForm.get('coverImage')?.value"
-          [src]="newsForm.get('coverImage')?.value"
+          [src]="getImageUrl(newsForm.get('coverImage')?.value)"
           alt="封面图片预览"
           class="preview-image">
       </div>

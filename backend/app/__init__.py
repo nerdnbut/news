@@ -1,35 +1,44 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import Config
 from app.utils import APIError
+import os
 
 db = SQLAlchemy()
 jwt = JWTManager()
 cors = CORS()
 
 def create_app(config_class=Config):
-    app = Flask(__name__, static_folder='uploads', static_url_path='/uploads')
+    # 确保上传目录存在
+    os.makedirs(config_class.UPLOAD_FOLDER, exist_ok=True)
+    
+    app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # 简化 CORS 配置
+    # 配置CORS，允许访问所有路由包括静态文件
     CORS(app, 
-         resources={r"/api/*": {
-             "origins": ["http://localhost:4200"],
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization"],
-             "expose_headers": ["Content-Type", "Authorization"],
-             "supports_credentials": True
-         }})
+         resources={
+             r"/*": {
+                 "origins": ["http://localhost:4200"],
+                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                 "allow_headers": ["Content-Type", "Authorization"],
+                 "expose_headers": ["Content-Type", "Authorization"]
+             }
+         })
 
     db.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app)
 
     # 注册蓝图
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
+
+    # 添加静态文件访问路由
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
     @app.errorhandler(APIError)
     def handle_api_error(error):

@@ -143,4 +143,8 @@ export class NewsEditorComponent implements OnInit {
       });
     }
   }
+
+  getImageUrl(path: string): string {
+    return this.uploadService.getFullImageUrl(path);
+  }
 } 
